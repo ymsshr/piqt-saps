@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>ALM/OFM PubSub</title>
+  <link href="css/base.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <div class="demo-container">
+    Login page
+    <div class="container-box">
+      <div id="login-box">
+        <form action="./login" method="post">
+        <p>User ID</p>
+        <input type="text" name="userid" id="userid" /><br>
+        <p>Password</p>
+        <input type="text" name="passwd" id="passwd" /><br>
+        <input type="submit" id="login" value="Login" />
+        </form>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="js/jquery-2.0.2.js"></script>
+  <script type="text/javascript" src="js/uupaa.sprintf.js"></script>
+<script type="text/javascript">
+// ページ読み込み完了後の初期化
+$(document).ready(function() {
+    // WebSocket サポートの有無判定
+    if (!window.WebSocket) {
+        alert("WebSocket is disabled");
+        return;
+    }
+});
+</script></body>
+</html>

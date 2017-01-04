@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>ALM/OFM PubSub</title>
+  <link href="css/base.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <div class="demo-container">
+    <div class="loginuser-box">
+      <span id="loginuser">
+      Login User : <span id="userid"></span>
+      </span><br />
+      <span id="logout">
+      &gt;&gt; Logout
+      </span>
+    </div>
+    <div class="container-box">
+      <div id="subscribe">
+        <h1>Subscribe</h1>
+        <div id="subscribinglist">
+          <h2>Subscribing topic</h2>
+          <input type="text" id="sub_topic" />
+          <input type="button" id="sub" value="Subscribe" />
+          <div class="subscribe-list" id="subscribed"></div>
+          <input type="button" id="unsub" value="Unsubscribe" /><br />
+        </div>
+        <div id="receivedtopic">
+        <h2>Received topic</h2>
+        <textarea id="msg"></textarea><br />
+        <input type="button" id="clear" value="Clear" />
+        </div>
+      </div>
+    </div>
+    <div class="container-box" style="clear:both">
+      <div id="publish">
+        <h1>Publish</h1>
+        <div>
+          <p>Topic<p>
+          <input type="text" id="pub_topic" />
+        </div>
+        <div>
+          <p>Content</p>
+          <input type="text" id="pub_content"/>
+          <input type="button" id="pub" value="Publish" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="js/jquery-2.0.2.js"></script>
+  <script type="text/javascript" src="js/jquery.json-2.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery.timer.js"></script>
+  <script type="text/javascript" src="js/jquery.websocket-0.0.1.js"></script>
+  <script type="text/javascript" src="js/uupaa.sprintf.js"></script>
+<script type="text/javascript">
+// Subscribe リストの更新
+// data : Subscribe しているトピックが入った配列
+function updateSubscribed(data) {
+    $("#subscribed").empty();
+    if (data.length != 0) {
+        $.each(data, function(i, val) {
+            var radio = $('<input class="sub_ele" name="subsel" type="radio" />').attr("value", val).attr("id", "subsel_"+val);
+            var label = $('<label class="sub_ele" />').attr("for", "subsel_"+val).text(val);
+            var span = $('<span />');
+            span.append(radio);
+            span.append(label);
+            $("#subscribed").append(span);
+//            $("#subscribed");
+            $("#subscribed").append($('<br />'));
+        });
+    } else {
+        $("#subscribed").text("No subscribed topic");
+    }
+}
+
+// ページ読み込み完了後の初期化
+$(document).ready(function() {
+    // WebSocket サポートの有無判定
+    if (!window.WebSocket) {
+        alert("WebSocket disabled");
+        return;
+    }
+
+    // Subscribe しているトピックのリストを取得してリストを更新する
+    $.getJSON("/api", "", function(data) {
+        $("#userid").text(data.userid);
+        updateSubscribed(data.subscribing);
+    });
+
+    // WebSocket メッセージ受信時の callback 設定
+    // <textarea id="msg"> に topic:content を追記していく
+    $.websocketSettings.message = function(event) {
+        var json = $.evalJSON(event.originalEvent.data);
+        var text = $("#msg").val();
+        $("#msg").val("From :" + json.sender + ", Topic : " + json.topic + ", \"" + json.content + "\"\n" + text);
+    }
+
+    // WebSocket 接続
+    ws = $.websocket("ws://"+location.host+"/ws");
+    // keep-alive timer
+    $.timer(30000, function(t) {
+        ws.send("keep","alive");
+    });
+
+    $("#logout").click( function(e) {
+      location.href = "/logout";
+    });
+
+    // unsubscribe ボタンクリック時の動作設定 -> 選択されている topic を unsubscribe する
+    // /api/ に cmd=unsub&topic=xxx を post
+    // Subscribe しているトピックのリストが返るのでリストを更新する
+    $("#unsub").click( function(e) {
+        var topic = $("input[name='subsel']:checked").val();
+        if (topic != undefined && topic != '') {
+            $.post("/api",{cmd: 'unsub', topic: topic} , function(data) {
+                updateSubscribed(data.subscribing);
+            });
+        }
+    });
+
+    // subscribe ボタンクリック時の動作設定 -> 指定された topic を subscribe する
+    // /api/ に cmd=sub&topic=xxx を post
+    // Subscribe しているトピックのリストが返るのでリストを更新する
+    $("#sub").click( function(e) {
+        var topic = $("#sub_topic").val();
+        if (topic != undefined && topic != '') {
+            if (topic.match(/^[0-9a-zA-Z_@]+$/)) {
+                $.post("/api", {cmd: 'sub', topic: topic} , function(data) {
+                    updateSubscribed(data.subscribing);
+                }).error(function(e) {
+                    location.href = "/";
+                });
+            } else {
+                alert("トピック名に利用できない文字が含まれています");
+            }
+        }
+        $("#sub_topic").val("");
+    });
+
+    // publish ボタンクリック時の動作設定 -> 指定された topic に content を publish する
+    // /api/ に cmd=pub&topic=xxx&content=xxx を post
+    $("#pub").click( function(e) {
+        var topic = $("#pub_topic").val();
+        var content = $("#pub_content").val();
+        if (topic != undefined && topic != '' && content != undefined && content != '') {
+            $.post("/api",{cmd: 'pub', topic: topic, content: content} , function(data) {
+                // updateSubscribed(data.subscribing);
+            }).error(function(xhr, text, thrown) {
+            alert(text);
+                location.href = "/";
+            });
+        }
+    });
+
+    // Clear ボタンクリック時の動作設定
+    $("#clear").click( function(e) {
+        $("#msg").val("");
+    });
+});
+</script>
+</body>
+</html>

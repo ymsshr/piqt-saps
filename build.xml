@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="OFM Pub/Sub package build" default="help" basedir=".">
+    <path id="classpath">
+        <pathelement path="."/>
+        <fileset dir="${basedir}/lib" includes="**/*.jar" />
+    </path>
+
+    <tstamp>
+       <format property="now" pattern="yyyyMMdd-HHmm" />
+    </tstamp>
+
+    <!-- Initialization target -->
+    <target name="-init">
+        <tstamp/>
+        <property name="name" value="OFM Pub/Sub package build"/>
+        <property name="Name" value="${name} Build"/>
+        <property name="year" value="2015"/>
+        <property name="ant.build.javac.target" value="1.7"/>
+        <property name="debug" value="true"/>
+        <property name="optimize" value="true"/>
+        <property name="deprecation" value="false"/>
+        <property name="use-zip-dist" value="false"/>
+
+        <!-- Directory Definitions -->
+        <property name="build.dir" value="${basedir}/build"/>
+        <property name="src.dir" value="${basedir}/src"/>
+        <property name="bin.dir" value="${basedir}/bin"/>
+        <property name="lib.dir" value="${basedir}/lib"/>
+        <property name="web.dir" value="${basedir}/web"/>
+        <property name="doc.dir" value="${basedir}/doc"/>
+        <property name="javadoc.dir" value="${basedir}/javadoc"/>
+        <property name="src.dir" value="${basedir}/src"/>
+        <property name="image.dir" value="${basedir}/image"/>
+        <property name="jarfile" value="OFMPubSub.jar"/>
+        <property name="instfile" value="${image.dir}/OFMPubSub"/>
+    </target>
+
+    <!-- Prepares the build directory -->
+    <target name="-prepare-build" depends="-init">
+        <mkdir dir="${build.dir}"/>
+    </target>
+
+
+    <target name="help" depends="-init">
+        <echo message=""/>
+        <echo message="${Name} Build Configuration"/>
+        <echo message="------------------------------------------------------"/>
+        <echo message=" USAGE : ant [target]"/>
+        <echo message=""/>
+        <echo message=" target :"/>
+        <echo message="   compipe        : コンパイル"/>
+        <echo message="   make-jar       : complile + jar 作成"/>
+        <echo message="   make-image     : make-jar + イメージディレクトリの作成"/>
+        <echo message="   clean          : 生成物のディレクトリの削除"/>
+        <echo message="   help           : このヘルプの表示 [Default]"/>
+        <echo message=""/>
+        <echo message="------------------------------------------------------"/>
+        <echo message=""/>
+    </target>
+
+
+    <target name="compile" depends="-prepare-build">
+        <javac srcdir="${src.dir}"
+                destdir="${build.dir}"
+                excludes="**/*.class,**/test/**,**/*~,**/.*"
+                debug="${debug}"
+                encoding="UTF8"
+                optimize="${optimize}"
+                deprecation="${deprecation}"
+                classpathref="classpath"
+        />
+    </target>
+
+    <target name="make-jar" depends="compile">
+        <jar jarfile="${jarfile}">
+            <fileset dir="${build.dir}">
+                <include name="**/*.class" />
+                <exclude name="**/test/**" />
+            </fileset>
+        </jar>
+    </target>
+
+
+  <target name="javadoc"  depends="compile" >
+    <javadoc encoding="utf-8" access="private" sourcepath="${src.dir}" destdir="${javadoc.dir}" >
+        <classpath refid="classpath" />
+    </javadoc>
+  </target>
+
+    <target name="-prepare-make-image" depends="-init">
+        <delete dir="${image.dir}"/>
+        <mkdir dir="${image.dir}"/>
+        <mkdir dir="${image.dir}/Document"/>
+        <mkdir dir="${image.dir}/Develop"/>
+        <mkdir dir="${image.dir}/Develop/src"/>
+        <mkdir dir="${image.dir}/OFMPubSub"/>
+        <mkdir dir="${image.dir}/OFMPubSub/bin"/>
+        <mkdir dir="${image.dir}/OFMPubSub/lib"/>
+        <mkdir dir="${image.dir}/OFMPubSub/web"/>
+        <mkdir dir="${image.dir}/OFMPubSub/test"/>
+    </target>
+
+    <target name="make-image" depends="-prepare-make-image, make-jar, javadoc">
+        <copy todir="${image.dir}/Document" preservelastmodified="true">
+            <fileset dir="${doc.dir}"/>
+        </copy>
+
+        <copy todir="${image.dir}/OFMPubSub/bin" preservelastmodified="true">
+            <fileset dir="${bin.dir}">
+                <include name="**/*" />
+                <exclude name=".test"/>
+            </fileset>
+        </copy>
+        <copy todir="${image.dir}/OFMPubSub/lib" preservelastmodified="true">
+            <fileset dir="${lib.dir}"/>
+        </copy>
+        <move file="${jarfile}" todir="${image.dir}/OFMPubSub/lib" preservelastmodified="true" />
+        <copy todir="${image.dir}/OFMPubSub/web" preservelastmodified="true">
+            <fileset dir="${web.dir}"/>
+        </copy>
+        <copy file="${basedir}/OFMCstub.rb" todir="${image.dir}/OFMPubSub/test" preservelastmodified="true" />
+
+        <copy todir="${image.dir}/Develop" preservelastmodified="true">
+            <fileset dir="${image.dir}/OFMPubSub" />
+        </copy>
+        <copy todir="${image.dir}/Develop/src" preservelastmodified="true">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java" />
+                <exclude name="**/test/**" />
+            </fileset>
+        </copy>
+        <copy todir="${image.dir}/Develop" file="${basedir}/build.xml" preservelastmodified="true" />
+        <move todir="${image.dir}/Develop/javadoc" preservelastmodified="true" includeEmptyDirs="true">
+            <fileset dir="${javadoc.dir}/" />
+        </move>
+
+        <tar tarfile="${instfile}.tar.gz" compression="gzip">
+            <tarfileset dir="${image.dir}/OFMPubSub" prefix="OFMPubSub">
+            </tarfileset>
+        </tar>
+        <delete file="${instfile}.tar" />
+        <delete dir="${image.dir}/OFMPubSub" />
+    </target>
+
+    <target name="clean" depends="-init" description="Clean all build products.">
+        <delete dir="${build.dir}"/>
+        <delete dir="${javadoc.dir}"/>
+        <delete dir="${image.dir}"/>
+        <delete file="${jarfile}"/>
+    </target>
+</project>
