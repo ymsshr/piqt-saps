@@ -11,7 +11,7 @@ import jp.piax.ofm.pubsub.monitor.PubSubMonitor;
 import jp.piax.ofm.pubsub.monitor.impl.SimpleMonitor;
 import org.piax.common.attribs.IncompatibleTypeException;
 import org.piax.gtrans.FutureQueue;
-import org.piax.gtrans.NoSuchOverlayException;
+import org.piax.gtrans.ov.NoSuchOverlayException;
 import org.piax.gtrans.RemoteValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

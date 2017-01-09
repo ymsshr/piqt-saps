@@ -7,6 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+//shikata for piqt.sh
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import jp.piax.ofm.gate.common.CommonValues;
 import jp.piax.ofm.gate.messages.IPMACPair;
 import jp.piax.ofm.pubsub.misc.OFMAddressCache;
@@ -17,6 +25,7 @@ import jp.piax.ofm.pubsub.piax.trans.OFMPubSubOverlay;
 import jp.piax.ofm.pubsub.piax.trans.TraceTransport;
 import jp.piax.ofm.trans.OFMUdpLocator;
 
+import org.mapdb.Engine;
 import org.piax.agent.AgentConfigValues;
 import org.piax.agent.AgentException;
 import org.piax.agent.AgentId;
@@ -39,9 +48,15 @@ import org.piax.gtrans.util.ChannelAddOnTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//shikata
+import org.piqt.web.Launcher;
+import org.piqt.peer.PeerMqEngine;
+import org.piqt.peer.PeerMqEngineMoquette;
+
 public class PubSubManagerImpl implements PubSubManager {
     /*--- logger ---*/
-    private static final Logger logger = LoggerFactory.getLogger(PubSubManagerImpl.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(PubSubManagerImpl.class);
 
     private PubSubManagerImplConfig config;
     private Peer peer;
@@ -58,10 +73,15 @@ public class PubSubManagerImpl implements PubSubManager {
 
     private Map<String, UserPubSub> userPubSubs = new HashMap<String, UserPubSub>();
 
+    // launcherを取得，launcherが持つengineを取得するため
+    private Launcher launcher = Launcher.getInstance();
+    private PeerMqEngineMoquette engine = launcher.getEngine();
 
     /**
      * コンストラクタ
-     * @param config PubSubManagerImpl の設定
+     * 
+     * @param config
+     *            PubSubManagerImpl の設定
      */
     public PubSubManagerImpl(PubSubManagerImplConfig config) {
         if (config == null)
@@ -70,51 +90,74 @@ public class PubSubManagerImpl implements PubSubManager {
         this.config = config;
     }
 
-    /* (非 Javadoc)
+    public PubSubAgentHomeImpl getPubSubAgentHome() {
+        return home;
+    }
+
+    public PubSubManagerImplConfig getPubSubManagerImplConfig() {
+        return config;
+    }
+
+    /*
+     * (非 Javadoc)
+     * 
      * @see jp.piaxinc.ofm.PubSubManager#start()
      */
     @Override
-    public synchronized void start() throws IOException, IdConflictException, IllegalArgumentException, NoSuchOverlayException, IncompatibleTypeException {
+    public synchronized void start()
+            throws IOException, IdConflictException, IllegalArgumentException,
+            NoSuchOverlayException, IncompatibleTypeException {
         if (isActive())
             throw new IllegalStateException("This instance is already started");
         if (started)
             throw new IllegalStateException("Used instance");
 
         PeerId peerId = PeerId.newId();
-        System.out.println(","+peerId);
+        System.out.println("," + peerId);
 
         // OFM 受信アドレスに対応する MAC アドレス取得
         OFMUdpLocator ofmlocator = config.getOFMLocator();
-        NetworkInterface ni = NetworkInterface.getByInetAddress(ofmlocator.getInetAddress());
-        IPMACPair address = new IPMACPair(ofmlocator.getSocketAddress(), ni.getHardwareAddress());
+        NetworkInterface ni = NetworkInterface
+                .getByInetAddress(ofmlocator.getInetAddress());
+        IPMACPair address = new IPMACPair(ofmlocator.getSocketAddress(),
+                ni.getHardwareAddress());
 
-        OFMAddressCache cache = new OFMAddressCache(config.getOFMCacheTimeout());
+        OFMAddressCache cache = new OFMAddressCache(
+                config.getOFMCacheTimeout());
 
         SubscriberCounter subscribecounter = new SubscriberCounter();
 
         // setup instances
         peer = Peer.getInstance(peerId);
 
-        transport = peer.newBaseChannelTransport(config.getPeerLocator());  // transport for overlay
-        ofmTransport = peer.newBaseTransport(null, new TransportId("ofmudp"), ofmlocator);   // transport for OFM
-        
+        transport = peer.newBaseChannelTransport(config.getPeerLocator()); // transport
+                                                                           // for
+                                                                           // overlay
+        ofmTransport = peer.newBaseTransport(null, new TransportId("ofmudp"),
+                ofmlocator); // transport for OFM
+
         // wrap for trace
         transport = new TraceTransport(transport, peerId);
-        
+
         // setup overlays
         skipgraph = new MSkipGraph<Destination, ComparableKey<?>>(transport);
         llnet = new LLNet(skipgraph);
         dolr = new DOLR<StringKey>(skipgraph);
         ofmpubsub = new OFMPubSubOverlay(dolr, ofmTransport, cache);
 
-        ChannelTransport<?> rpcTr = new ChannelAddOnTransport<PeerId>(skipgraph);
+        ChannelTransport<?> rpcTr = new ChannelAddOnTransport<PeerId>(
+                skipgraph);
 
         // setup AgentHome for OFM pubsub
-        home = new PubSubAgentHomeImpl(rpcTr, config.getAgClassPath(), ofmpubsub.getTransportIdPath(), address, cache, subscribecounter);
+        home = new PubSubAgentHomeImpl(rpcTr, config.getAgClassPath(),
+                ofmpubsub.getTransportIdPath(), address, cache,
+                subscribecounter);
 
         // for location discovery
-        //home.declareAttrib(AgentConfigValues.LOCATION_ATTRIB_NAME, Location.class);
-        //home.bindOverlay(AgentConfigValues.LOCATION_ATTRIB_NAME, llnet.getTransportIdPath());
+        // home.declareAttrib(AgentConfigValues.LOCATION_ATTRIB_NAME,
+        // Location.class);
+        // home.bindOverlay(AgentConfigValues.LOCATION_ATTRIB_NAME,
+        // llnet.getTransportIdPath());
 
         // for OFGate discovery
         home.declareAttrib(CommonValues.OFGATE_ATTRIB, String.class);
@@ -129,9 +172,17 @@ public class PubSubManagerImpl implements PubSubManager {
         active = true;
         started = true;
         logger.info("Start PubSubManager");
+
+        // shikata
+        // piqt MQTT Broker Moquette 起動
+        piqtShellScript();
+        logger.info("Start PIQT MQTTBroker ");
+
     }
 
-    /* (非 Javadoc)
+    /*
+     * (非 Javadoc)
+     * 
      * @see jp.piaxinc.ofm.PubSubManager#stop()
      */
     @Override
@@ -168,11 +219,14 @@ public class PubSubManagerImpl implements PubSubManager {
         return active;
     }
 
-    /* (非 Javadoc)
+    /*
+     * (非 Javadoc)
+     * 
      * @see jp.piaxinc.ofm.PubSubManager#getUserPubSub(java.lang.String)
      */
     @Override
-    public synchronized UserPubSub getUserPubSub(String userid) throws AgentException {
+    public synchronized UserPubSub getUserPubSub(String userid)
+            throws AgentException {
         if (userid == null)
             throw new NullPointerException("userid should not be null");
         if (userid.isEmpty())
@@ -186,12 +240,16 @@ public class PubSubManagerImpl implements PubSubManager {
                 break;
             }
         }
-        // userid に対応する PubSubAgent が無い場合は生成する
         // engineで作成する仕様に shikata
+        // engineを取得し，engine上にPubSubAgentを作成する．
         if (useragentid == null) {
-            useragentid = home.createAgent(config.getPubsubAgent(), userid);
-            PubSubAgentIf agent = home.getStub(null, useragentid);
-            agent.setUserId(userid);
+            /*
+             * useragentid = home.createAgent(config.getPubsubAgent(), userid);
+             * PubSubAgentIf agent = home.getStub(useragentid);
+             * agent.setUserId(userid);
+             */
+
+            // engine.creatPubSubAgent(home, config, useragentid, userid);
         }
         // sleep 状態の場合は復帰させる
         if (home.isAgentSleeping(useragentid)) {
@@ -205,14 +263,57 @@ public class PubSubManagerImpl implements PubSubManager {
         }
 
         if (!userPubSubs.containsKey(userid)) {
-            UserPubSub userpubsub = new UserPubSubImpl(userid, useragentid, home);
+            UserPubSub userpubsub = new UserPubSubImpl(userid, useragentid,
+                    home);
             userPubSubs.put(userid, userpubsub);
             return userpubsub;
         }
         return userPubSubs.get(userid);
     }
-    
-    //Toratani 
-    
-    
+
+    // Toratani
+
+    // shikata piqt.sh start
+    public void piqtShellScript() {
+        try {
+            // String path = getPiqtshPath();
+            Process process = new ProcessBuilder("sh",
+                    "../../target/piqt-1.0.0-SNAPSHOT/piqt.sh").start();
+            String text;
+            InputStream is = process.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+            BufferedReader reader = new BufferedReader(isr);
+            StringBuilder builder = new StringBuilder();
+            int c;
+            while ((c = reader.read()) != -1) {
+                builder.append((char) c);
+            }
+            // 実行結果を格納
+            text = builder.toString();
+            int ret = process.waitFor();
+
+            System.out.println(text);
+            System.out.println(ret);
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     * shikata 没 public String getPiqtshPath(){ // classパスを取得 // jarならjarファイル名
+     * String classPath = System.getProperty("PubSubManagerImpl.class.path");
+     * File classFile = new File(classPath);
+     * 
+     * // 正規化する。 Path path = Paths.get(classFile.getAbsolutePath()); String
+     * piqtHomePath = path.normalize().toString();
+     * System.out.println(piqtHomePath);
+     * 
+     * return piqtHomePath; }
+     * 
+     ****/
+
+    public PeerMqEngineMoquette getEngine() {
+        return launcher.getEngine();
+    }
 }

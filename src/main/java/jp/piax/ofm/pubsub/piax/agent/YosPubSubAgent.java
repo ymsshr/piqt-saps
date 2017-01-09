@@ -32,7 +32,7 @@ import jp.piax.ofm.pubsub.piax.trans.OFMPubSubOverlay;
 
 import org.piax.common.attribs.IncompatibleTypeException;
 import org.piax.gtrans.FutureQueue;
-import org.piax.gtrans.NoSuchOverlayException;
+import org.piax.gtrans.ov.NoSuchOverlayException;
 import org.piax.gtrans.RemoteValue;
 import org.piax.util.MersenneTwister;
 import org.slf4j.Logger;

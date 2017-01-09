@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
+import org.piax.agent.AgentException;
 import org.piax.common.Destination;
 import org.piax.common.PeerId;
 import org.piax.common.PeerLocator;
@@ -144,7 +145,7 @@ public class OnePeerMoquette implements Runnable {
             e = new PeerMqEngineMoquette(szk, toMQTTProps());
             // piax only
             // e = new PeerMqEngine(szk);
-        } catch (MqException e1) {
+        } catch (MqException | AgentException e1) {
             System.err.println("Error 3");
             e1.printStackTrace();
         }

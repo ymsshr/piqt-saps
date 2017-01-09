@@ -30,6 +30,7 @@ import org.piax.gtrans.ov.OverlayReceivedMessage;
 import org.piax.gtrans.ProtocolUnsupportedException;
 import org.piax.gtrans.ReceivedMessage;
 import org.piax.gtrans.RequestTransport;
+import org.piax.gtrans.TransOptions;
 import org.piax.gtrans.Transport;
 import org.piax.gtrans.TransportListener;
 import org.piax.gtrans.ov.compound.CompoundOverlay.SpecialKey;
@@ -422,27 +423,34 @@ public class OFMPubSubOverlay extends OverlayImpl<StringKey, StringKey> implemen
 
     /* (非 Javadoc)
      * @see org.piax.gtrans.RequestTransportListener#onReceive(org.piax.gtrans.RequestTransport, org.piax.gtrans.ReceivedMessage)
-     */
+     *
     @Override
     public void onReceive(RequestTransport<StringKey> trans, ReceivedMessage rmsg) {
         logger.warn("onReceive for RequestTransport is unsupported");
     }
-
     /* (非 Javadoc)
      * @see org.piax.gtrans.RequestTransportListener#onReceiveRequest(org.piax.gtrans.RequestTransport, org.piax.gtrans.ReceivedMessage)
-     */
+     
     @Override
     public FutureQueue<?> onReceiveRequest(RequestTransport<StringKey> trans,
             ReceivedMessage rmsg) {
         logger.warn("onReceiveRequest for RequestTransport is unsupported");
         return null;
     }
-
+*/
     /* (非 Javadoc)
      * @see org.piax.gtrans.TransportListener#onReceive(org.piax.gtrans.Transport, org.piax.gtrans.ReceivedMessage)
      */
     @Override
     public void onReceive(Transport<StringKey> trans, ReceivedMessage rmsg) {
         logger.warn("onReceive for Transport is unsupported");
+    }
+
+    @Override
+    public FutureQueue<?> request(ObjectId arg0, ObjectId arg1, StringKey arg2,
+            Object arg3, TransOptions arg4)
+            throws ProtocolUnsupportedException, IOException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

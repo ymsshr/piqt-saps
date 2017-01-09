@@ -59,14 +59,15 @@ public class SinglePubSubTest {
         // PeerMqDeliveryToken.USE_DELEGATE = false;
         // System.out.println("--- NO DELEGATE ---");
         // runTest2(0, 0);
-/*
+
         PeerMqDeliveryToken.USE_DELEGATE = true;
         System.out.println("--- USE DELEGATE ---");
         runTest2(0, 0);
-*/
+        /*
          System.out.println("--- USE DELEGATE ---");
          PeerMqDeliveryToken.USE_DELEGATE = true;
          runTest(0, 0);
+         */
         // // warm up hot spot
         // System.out.println("---start---");
         // System.out.println("--- NO DELEGATE ---");

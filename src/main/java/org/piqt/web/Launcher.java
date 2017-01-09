@@ -11,6 +11,7 @@
 package org.piqt.web;
 
 import static org.piqt.peer.Util.isEmpty;
+
 import static org.piqt.peer.Util.newline;
 import static org.piqt.peer.Util.stackTraceStr;
 import static org.piqt.web.MqttPiaxConfig.KEY_AUTO_START;
@@ -30,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.security.ProtectionDomain;
@@ -46,6 +48,7 @@ import net.arnx.jsonic.JSON;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.piax.agent.AgentException;
 import org.piax.common.Destination;
 import org.piax.common.PeerId;
 import org.piax.common.PeerLocator;
@@ -54,6 +57,8 @@ import org.piax.gtrans.IdConflictException;
 import org.piax.gtrans.Peer;
 import org.piax.gtrans.ov.szk.Suzaku;
 import org.piax.gtrans.raw.udp.UdpLocator;
+import org.piax.samples.Util;
+import org.piax.util.LocalInetAddrs;
 import org.piqt.MqCallback;
 import org.piqt.MqDeliveryToken;
 import org.piqt.MqException;
@@ -66,13 +71,25 @@ import org.piqt.peer.PeerMqEngineMoquette;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jp.piax.ofm.pubsub.PubSubManager;
+import jp.piax.ofm.pubsub.PubSubManagerImplConfig;
+import jp.piax.ofm.pubsub.web.Authenticator;
+import jp.piax.ofm.pubsub.web.DummyAuthenticator;
+import jp.piax.ofm.pubsub.web.WebInterfaceService;
+import jp.piax.ofm.trans.OFMUdpLocator;
+
+
+
+
+
 public class Launcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Launcher.class
             .getPackage().getName());
     private static Launcher instance;
     private static boolean cont = true;
-
+    
+    
     public static enum response {
         OK, NG
     };
@@ -180,7 +197,7 @@ public class Launcher {
         return new File(System.getProperty(PIQT_PATH_PROPERTY_NAME), PROPERTY_FILE_NAME);
     }
 
-    private void init(String args[]) {
+    private void init(String args[]) throws AgentException {
         server = null;
 
         if (!parseCommandLine(args)) {
@@ -264,6 +281,7 @@ public class Launcher {
             }
         }
     }
+        
 
     private void fin() {
         if (szk != null) {
@@ -291,7 +309,7 @@ public class Launcher {
         return "UnknownHost";
     }
 */
-    public Response start() {
+    public Response start() throws AgentException {
         String startLog = "";
         if (startDate != 0) {
             String msg = "MQTT already started.";
@@ -506,8 +524,12 @@ public class Launcher {
             }
         }
     }
+    
+    public PeerMqEngineMoquette getEngine(){
+        return e;
+    }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws AgentException {
         Launcher launcher = Launcher.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {

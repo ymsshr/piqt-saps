@@ -15,7 +15,7 @@ import org.piax.gtrans.IdConflictException;
 import org.piax.gtrans.RPCInvoker;
 import org.piax.gtrans.impl.NestedMessage;
 import org.piax.gtrans.impl.OneToOneMappingTransport;
-import org.piax.gtrans.sg.RQMessage;
+import org.piax.gtrans.ov.sg.RQMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

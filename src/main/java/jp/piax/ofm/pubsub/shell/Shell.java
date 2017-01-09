@@ -540,10 +540,9 @@ public class Shell {
         pubSubManager.start();
         webService.start();
         
-        // shikata
-        lancher.start();
 
         active = true;
+        
     }
 
     /**

@@ -14,13 +14,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eclipse.moquette.server.Server;
 import org.eclipse.moquette.server.config.ClasspathConfig;
 import org.eclipse.moquette.server.config.IConfig;
+import org.piax.agent.AgentException;
+import org.piax.agent.AgentId;
 import org.piqt.MqException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jp.piax.ofm.pubsub.PubSubManagerImpl;
+import jp.piax.ofm.pubsub.PubSubManagerImplConfig;
+import jp.piax.ofm.pubsub.piax.PubSubAgentHomeImpl;
 
 public class Broker {
     private static final Logger logger = LoggerFactory.getLogger(Broker.class
@@ -34,8 +41,12 @@ public class Broker {
     private Properties properties = null;
     private Server mqttBroker = null;
     PeerMqEngineMoquette engine;
+    
+    private PubSubManagerImpl pubSubManager;
+    private String agentName;
+    private PubSubAgentHomeImpl home = null;
 
-    public Broker(PeerMqEngineMoquette engine, Properties web_config) {
+    public Broker(PeerMqEngineMoquette engine, Properties web_config) throws AgentException {
         if (web_config == null) {
             config = new ClasspathConfig();
             config.setProperty("websocket_port", "");
@@ -47,6 +58,30 @@ public class Broker {
         }
         System.setProperty("intercept.handler", "org.piqt.peer.Observer");
         this.engine = engine;
+        
+        // shikata createAgent
+        home = pubSubManager.getPubSubAgentHome();
+
+        Set<AgentId> aids = home.getAgentIds();
+        AgentId useragentid = null;
+        for (AgentId aid : aids) {
+            if (engine.getUserId().equals(home.getAgentName(aid))) {
+                useragentid = aid;
+                break;
+            }
+        }
+        // engineで作成する仕様に shikata
+        // engineを取得し，engine上にPubSubAgentを作成する．
+        if (useragentid == null) {
+            /*
+             * useragentid = home.createAgent(config.getPubsubAgent(), userid);
+             * PubSubAgentIf agent = home.getStub(useragentid);
+             * agent.setUserId(userid);
+             */
+
+            engine.creatPubSubAgent(home, pubSubManager.getPubSubManagerImplConfig(), useragentid, engine.getUserId());
+        }
+        
     }
 
     synchronized static void putEngine(PeerMqEngineMoquette e) {

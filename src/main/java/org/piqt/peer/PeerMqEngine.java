@@ -125,6 +125,7 @@ public class PeerMqEngine implements MqEngine,
     private volatile PubSubMonitor monitor = new SimpleMonitor();
     private ScheduledFuture<?> monitoringTask;      // モニタリングタスク
     
+    
  // モニタリング処理
     private Runnable monitoring = new Runnable() {
         @Override
@@ -236,6 +237,7 @@ public class PeerMqEngine implements MqEngine,
         //agentAPI suport (shikata)
         this.home = home;
         //stub = home.getStub(null, userAgentId);
+        this.userId = peer.getPeerId().toString();
     }
 
     public PeerMqEngine(String host, int port) throws MqException {

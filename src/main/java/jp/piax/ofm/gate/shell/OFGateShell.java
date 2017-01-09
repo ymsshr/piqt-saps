@@ -32,8 +32,8 @@ import org.piax.common.wrapper.StringKey;
 import org.piax.gtrans.ChannelTransport;
 import org.piax.gtrans.Peer;
 import org.piax.gtrans.Transport;
-import org.piax.gtrans.dolr.DOLR;
-import org.piax.gtrans.sg.MSkipGraph;
+import org.piax.gtrans.ov.dolr.DOLR;
+import org.piax.gtrans.ov.sg.MSkipGraph;
 import org.piax.gtrans.util.ChannelAddOnTransport;
 import org.piax.samples.Util;
 import org.piax.util.LocalInetAddrs;
@@ -379,7 +379,7 @@ public class OFGateShell {
         // setup OFGate agent
         AgentId aid = home.createAgent(OFGate.class);
         logger.info("OFMGate Agent : {}", aid);
-        OFGateIf ofmgate = home.getStub(aid);
+        OFGateIf ofmgate = home.getStub(null, aid);
         ofmgate.setOFGateManager(manager);
 
         logger.info("Peer ID       : {}", peer.getPeerId().toString());

@@ -10,6 +10,7 @@ import org.eclipse.moquette.interception.messages.InterceptPublishMessage;
 import org.eclipse.moquette.interception.messages.InterceptSubscribeMessage;
 import org.eclipse.moquette.interception.messages.InterceptUnsubscribeMessage;
 import org.eclipse.moquette.spi.impl.ProtocolProcessor;
+import org.piax.common.attribs.IncompatibleTypeException;
 import org.piqt.MqException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public class Observer implements InterceptHandler {
                 + msg.getRequestedQos());
         try {
             engine.subscribe(msg.getTopicFilter());
-        } catch (MqException e) {
+        } catch (MqException | IllegalArgumentException | IncompatibleTypeException e) {
             logger.error("Failed to subscribe." + newline + stackTraceStr(e));
         }
     }

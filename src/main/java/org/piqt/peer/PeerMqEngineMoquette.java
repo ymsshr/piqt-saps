@@ -49,14 +49,14 @@ public class PeerMqEngineMoquette extends PeerMqEngine {
     static public String PEER_CLIENT_ID = "mqttpiax"; // XXX it is embedded in modified moquette.
 
     public PeerMqEngineMoquette(Overlay<Destination, LATKey> overlay,
-            Properties config) throws MqException {
+            Properties config) throws MqException, AgentException {
         super(overlay);
         moquette = new Broker(this, config);
         peerId = overlay.getPeerId();
         receviedMessagesFromPIAX = 0;
     }
 
-    public PeerMqEngineMoquette(String host, int port) throws MqException {
+    public PeerMqEngineMoquette(String host, int port) throws MqException, AgentException {
         super(host, port);
 
         Properties properties = new Properties();

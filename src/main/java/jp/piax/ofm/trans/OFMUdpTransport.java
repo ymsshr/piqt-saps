@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.piax.GTransConfigValues;
+import org.piax.gtrans.GTransConfigValues;
 import org.piax.common.PeerId;
 import org.piax.gtrans.NoSuchPeerException;
 import org.piax.gtrans.ReceivedMessage;
