@@ -36,7 +36,9 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.ws.rs.core.MediaType;
@@ -49,12 +51,18 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.piax.agent.AgentException;
+import org.piax.common.ComparableKey;
 import org.piax.common.Destination;
 import org.piax.common.PeerId;
 import org.piax.common.PeerLocator;
+import org.piax.common.wrapper.StringKey;
 import org.piax.gtrans.ChannelTransport;
 import org.piax.gtrans.IdConflictException;
 import org.piax.gtrans.Peer;
+import org.piax.gtrans.Transport;
+import org.piax.gtrans.ov.dolr.DOLR;
+import org.piax.gtrans.ov.llnet.LLNet;
+import org.piax.gtrans.ov.sg.MSkipGraph;
 import org.piax.gtrans.ov.szk.Suzaku;
 import org.piax.gtrans.raw.udp.UdpLocator;
 import org.piax.samples.Util;
@@ -73,6 +81,9 @@ import org.slf4j.LoggerFactory;
 
 import jp.piax.ofm.pubsub.PubSubManager;
 import jp.piax.ofm.pubsub.PubSubManagerImplConfig;
+import jp.piax.ofm.pubsub.UserPubSub;
+import jp.piax.ofm.pubsub.piax.PubSubAgentHomeImpl;
+import jp.piax.ofm.pubsub.piax.trans.OFMPubSubOverlay;
 import jp.piax.ofm.pubsub.web.Authenticator;
 import jp.piax.ofm.pubsub.web.DummyAuthenticator;
 import jp.piax.ofm.pubsub.web.WebInterfaceService;
@@ -109,6 +120,24 @@ public class Launcher {
     Suzaku<Destination, LATKey> szk;
 
     long startDate;
+    
+    // pubsubManager shikata
+    private PubSubManagerImplConfig pubsubconfig;
+    //private Peer peer;
+    private ChannelTransport<?> transport;
+    private Transport<OFMUdpLocator> ofmTransport;
+    private MSkipGraph<Destination, ComparableKey<?>> skipgraph;
+    private LLNet llnet;
+    private DOLR<StringKey> dolr;
+    private OFMPubSubOverlay ofmpubsub;
+    private PubSubAgentHomeImpl home;
+
+    private boolean active = false;
+    private boolean started = false;
+
+    private Map<String, UserPubSub> userPubSubs = new HashMap<String, UserPubSub>();
+
+    ////
 
     public static String version() {
         return Launcher.class.getPackage().getImplementationVersion();
@@ -511,6 +540,10 @@ public class Launcher {
 
     public long getStartDate() {
         return startDate;
+    }
+    
+    public void pubsubManager(){
+        
     }
 
     private void jetty_stop() {
